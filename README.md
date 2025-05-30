@@ -20,12 +20,12 @@ The authors used *RNA-seq* to determine whether the genes bound by ODO1 (as show
 - ChIP-seq analysis
   - [Step 1: Import data](#step-1-import-data)
   - [Step 2: Quality control using FastQC](#step-2-quality-control-using-fastqc)
- - [Step 3: Trim using Trimmomatic ](#step-3-trim-using-trimmomatic)
- - [Step 4: Map reads to Petunia genome using Bowtie2](#step-4-map-reads-to-petunia-genome-using-bowtie2)
- - [Step 5: Merge Input files using MergeSamFiles](#step-5-Merge-Input-files-using-MergeSamFiles)
- - [Step 6: Find common peaks between the 2 petunia lines using Bedtools Intersect intervals](#step-6-Find-common-peaks-between-the-2-petunia-lines-using-Bedtools-Intersect-intervals)
- - [Step 7: bedtools Intersect intervals to find common peaks between the 2 petunia lines](#step-7-bedtools-Intersect-intervals-to-find-common-peaks-between-the-2-petunia-lines)
- - [Step 8: Gene Ontology](#step-8-gene-ontology)
+  - [Step 3: Trim using Trimmomatic ](#step-3-trim-using-trimmomatic)
+  - [Step 4: Map reads to Petunia genome using Bowtie2](#step-4-map-reads-to-petunia-genome-using-bowtie2)
+  - [Step 5: Merge Input files using MergeSamFiles](#step-5-Merge-Input-files-using-MergeSamFiles)
+  - [Step 6: Find common peaks between the 2 petunia lines using Bedtools Intersect intervals](#step-6-Find-common-peaks-between-the-2-petunia-lines-using-Bedtools-Intersect-intervals)
+  -  [Step 7: bedtools Intersect intervals to find common peaks between the 2 petunia lines](#step-7-bedtools-Intersect-intervals-to-find-common-peaks-between-the-2-petunia-lines)
+  -  [Step 8: Gene Ontology](#step-8-gene-ontology)
 
 - RNA-seq analysis
   - [Step 1: Import data](#step-1-import-data)
@@ -44,20 +44,32 @@ The authors used *RNA-seq* to determine whether the genes bound by ODO1 (as show
 
 ### ChIP-seq analysis
 #### Step 1: Import data
-From this [website](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=PRJNA729780&o=acc_s%3Aa), click on the boxes next to the SRR numbers for the Input and IP data for Ctcf homozygous mutation (9 and 15 on the list) and then press the the galaxy button shown in the picture below. Do the same for the Input and IP data for Wildtype (10 and 16 on the list)
+We will first download the IP dataset, from this [website](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=PRJNA729780&o=acc_s%3Aa), click on the boxes next to the SRR number for the 	
+ChIP-seq data (SRR14528049 and SRR14528050) and then press the the galaxy button shown in the picture below. This will automatically bring you to Galaxy (Note that you will have to create a Galaxy account to get enough memory to do this analysis). Name this SRA collection *SRA(ODO1)*. 
 
+Then, we will download the background control(input) dataset. From this [website](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=PRJNA650505&o=acc_s%3Aa), click on the boxes for SRR12442821,  SRR12442822 and SRR12442825,  then press the Galaxy button. Name this SRA collection *SRA(Input)*. 
+
+Note: Notice that the ODO1 dataset is single-end and the Input dataset is Paired-end. We will handle this later
 
 #### Step 2: Quality control using ```FastQC```
 
+Run fastQC on *SRA(ODO1)* and *SRA(Input)*. From the fastQC report, we can see that the ODO1 dataset have a high percentage of polyA sequence and the Input dataset have a high percentage of PolyG sequence. 
+
 #### Step 3: Trim using ```Trimmomatic``` 
+
+
 
 #### Step 4: Map reads to Petunia genome using ```Bowtie2```
 
+
 #### Step 5: Merge Input files using ```MergeSamFiles``` 
+
 
 #### Step 6: Find peaks using ```MACS2 callpeak``` 
 
+
 #### Step 7: Find common peaks between the 2 petunia lines using ```Bedtools Intersect intervals``` 
+
 
 #### Step 8: Gene Ontology
 
