@@ -57,7 +57,39 @@ Run fastQC on *SRA(ODO1)* and *SRA(Input)*. From the fastQC report, we can see t
 
 #### Step 3: Trim using ```Trimmomatic``` 
 
+Run ```Trimmomatic``` once on each dataset collection
 
+For the ODO1 dataset:
+- input: ```Single-end or paired-end reads?```: single-end
+  - *SRA(ODO1)*
+- Use the following settings:
+     - ```Perform initial ILLUMINACLIP step?``` : Yes
+          - ```Select standard adapter sequences or provide custom?```: custom
+     - ```Adapter sequence```:
+  ```
+          > polyA
+            AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+  ```
+     - ```Average quality required``` : 30
+     - ```Quality score encoding```: phred 33
+ 
+For the Input dataset:
+- input: ```Single-end or paired-end reads?```: paired-end (as a collection)
+  - *SRA(Input)*
+- Use the following settings:
+     - ```Perform initial ILLUMINACLIP step?``` : Yes
+          - ```Select standard adapter sequences or provide custom?```: custom
+     - ```Adapter sequence```:
+  ```
+          > polyA
+            GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+  ```
+     - ```Average quality required``` : 30
+     - ```Quality score encoding```: phred 33
+
+Name the outputs: *trimmomatic on ODO1* and *trimmomatic on Input*
+
+Then run fastQC on *trimmomatic on ODO1* and *trimmomatic on Input* to see whether trimmomatic has succesfully trimmed out the adapter sequence and polyG sequence. Now in the fastQC report, we can see that we have trimmed out the adapter sequences. 
 
 #### Step 4: Map reads to Petunia genome using ```Bowtie2```
 
