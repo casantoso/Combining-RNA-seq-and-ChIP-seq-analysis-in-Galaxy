@@ -45,15 +45,15 @@ The authors used *RNA-seq* to determine whether the genes bound by ODO1 (as show
 ### ChIP-seq analysis
 #### Step 1: Import data
 We will first download the IP dataset, from this [website](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=PRJNA729780&o=acc_s%3Aa), click on the boxes next to the SRR number for the 	
-ChIP-seq data (SRR14528049 and SRR14528050) and then press the the galaxy button shown in the picture below. This will automatically bring you to Galaxy (Note that you will have to create a Galaxy account to get enough memory to do this analysis). Name this SRA collection *SRA(ODO1)*. 
+ChIP-seq data (SRR14528049 and SRR14528050) and then press the the galaxy button shown in the picture below. This will automatically bring you to Galaxy (Note that you will have to create a Galaxy account to get enough memory to do this analysis). Name this SRA collection ***SRA(ODO1)***. 
 
-Then, we will download the background control(input) dataset. From this [website](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=PRJNA650505&o=acc_s%3Aa), click on the boxes for SRR12442821,  SRR12442822 and SRR12442825,  then press the Galaxy button. Name this SRA collection *SRA(Input)*. 
+Then, we will download the background control(input) dataset. From this [website](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=PRJNA650505&o=acc_s%3Aa), click on the boxes for SRR12442821,  SRR12442822 and SRR12442825,  then press the Galaxy button. Name this SRA collection ***SRA(Input)***. 
 
 Note: Notice that the ODO1 dataset is single-end and the Input dataset is Paired-end. We will handle this later
 
 #### Step 2: Quality control using ```FastQC```
 
-Run fastQC on *SRA(ODO1)* and *SRA(Input)*. From the fastQC report, we can see that the ODO1 dataset have a high percentage of polyA sequence and the Input dataset have a high percentage of PolyG sequence. 
+Run fastQC on ***SRA(ODO1)*** and ***SRA(Input)***. From the fastQC report, we can see that the ODO1 dataset have a high percentage of polyA sequence and the Input dataset have a high percentage of PolyG sequence. 
 
 #### Step 3: Trim using ```Trimmomatic``` 
 
@@ -61,7 +61,7 @@ Run ```Trimmomatic``` once on each dataset collection
 
 For the ODO1 dataset:
 - input: ```Single-end or paired-end reads?```: single-end
-  - *SRA(ODO1)*
+  - ***SRA(ODO1)***
 - Use the following settings:
      - ```Perform initial ILLUMINACLIP step?``` : Yes
           - ```Select standard adapter sequences or provide custom?```: custom
@@ -75,7 +75,7 @@ For the ODO1 dataset:
  
 For the Input dataset:
 - input: ```Single-end or paired-end reads?```: paired-end (as a collection)
-  - *SRA(Input)*
+  - ***SRA(Input)***
 - Use the following settings:
      - ```Perform initial ILLUMINACLIP step?``` : Yes
           - ```Select standard adapter sequences or provide custom?```: custom
@@ -87,12 +87,20 @@ For the Input dataset:
      - ```Average quality required``` : 30
      - ```Quality score encoding```: phred 33
 
-Name the outputs: *trimmomatic on ODO1* and *trimmomatic on Input*
+Name the outputs: ***trimmomatic on ODO1*** and ***trimmomatic on Input***
 
-Then run fastQC on *trimmomatic on ODO1* and *trimmomatic on Input* to see whether trimmomatic has succesfully trimmed out the adapter sequence and polyG sequence. Now in the fastQC report, we can see that we have trimmed out the adapter sequences. 
+Then run fastQC on ***trimmomatic on ODO1*** and ***trimmomatic on Input*** to see whether trimmomatic has succesfully trimmed out the adapter sequence and polyG sequence. Now in the fastQC report, we can see that we have trimmed out the adapter sequences. 
 
 #### Step 4: Map reads to Petunia genome using ```Bowtie2```
+Download the petunia genome
 
+Run ```Bowtie2``` twice: Once with ***trimmomatic on ODO1*** as the input and once with ***trimmomatic on Input*** as the input 
+
+Use the following settings:
+- ```Will you select a reference genome from your history or use a built-in index?```: Use a built-in genome index
+     -```Select reference genome```: Mouse (mus musculus) : mm10
+- ```Select analysis mode```
+     -```Do you want to use presets?```: Very sensitive end-to-end
 
 #### Step 5: Merge Input files using ```MergeSamFiles``` 
 
