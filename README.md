@@ -49,7 +49,17 @@ ChIP-seq data (SRR14528049 and SRR14528050) and then press the the galaxy button
 
 Then, we will download the background control(input) dataset. From this [website](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=PRJNA650505&o=acc_s%3Aa), click on the boxes for SRR12442821,  SRR12442822 and SRR12442825,  then press the Galaxy button. Name this SRA collection ***SRA(Input)***. 
 
-Note: Notice that the ODO1 dataset is single-end and the Input dataset is Paired-end. We will handle this later
+Then go to ```tools``` → ```Get Data``` → ```Download and Extract Reads in FASTQ format from NCBI SRA```
+
+Use the following settings:
+* ```select input type```: list of SRA accession, one per line
+* Under ```sra accession list```, input your SRA collection (i.e. ***SRA(ODO1)***/ ***SRA(Input)***)
+* ```select output format```: gzip compressed fastqc
+Then press ```Run Tool```. Run it twice, once for each SRA collection in your history
+
+
+After it has finished running, for the ODO1 dataset, you should see ***a list with 2 fastqsanger.gz pairs*** under ***Single-end data (fastq-dump)*** and ***a list with 0 datasets*** under ***Paired-end data (fastq-dump)***. For, the input dataset, you will see ***a list with 3 fastqsanger.gz pairs*** under ***Paired-end data (fastq-dump)*** and ***a list with 0 datasets*** under ***Single-end data (fastq-dump)***
+
 
 #### Step 2: Quality control using ```FastQC```
 
