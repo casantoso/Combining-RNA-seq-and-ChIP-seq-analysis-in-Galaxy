@@ -60,16 +60,29 @@ Then press ```Run Tool```. Run it twice, once for each SRA collection in your hi
 
 After it has finished running, for the ODO1 dataset, you should see ***a list with 2 fastqsanger.gz pairs*** under ***Single-end data (fastq-dump)*** and ***a list with 0 datasets*** under ***Paired-end data (fastq-dump)***. For, the input dataset, you will see ***a list with 3 fastqsanger.gz pairs*** under ***Paired-end data (fastq-dump)*** and ***a list with 0 datasets*** under ***Single-end data (fastq-dump)***
 
+![SRA](chipseq_img/1-SRA.png)
 
 #### Step 2: Quality control using ```FastQC```
 
 Run fastQC on ***SRA(ODO1)*** and ***SRA(Input)***. From the fastQC report, we can see that the ODO1 dataset have a high percentage of polyA sequence and the Input dataset have a high percentage of PolyG sequence. 
 
+![ODO1_fastQC_before_trimming](chipseq_img/2-ODO1_fastQC_before_trimming.png)
+![Input_fastQC_before_trimming](chipseq_img/3-Input_fastQC_before_trimming.png)
+
 #### Step 3: Trim using ```Trimmomatic``` 
 
-Run ```Trimmomatic``` once on each dataset collection
+Run ```Trimmomatic``` twice on each dataset collection
 
 For the ODO1 dataset:
+##### For the 1st run:
+- input: ```Single-end or paired-end reads?```: single-end
+  - ***SRA(ODO1)***
+- Use the following settings:
+     - ```Perform initial ILLUMINACLIP step?``` : Yes
+          - ```Select standard adapter sequences or provide custom?```: Standard
+     - ```Adapter sequence to use```: TrueSeq3 (single-ended, for MiSeq and HiSeq)
+
+##### For the 2nd run:
 - input: ```Single-end or paired-end reads?```: single-end
   - ***SRA(ODO1)***
 - Use the following settings:
@@ -80,10 +93,18 @@ For the ODO1 dataset:
           > polyA
             AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
   ```
-     - ```Average quality required``` : 30
-     - ```Quality score encoding```: phred 33
+
  
 For the Input dataset:
+##### For the 1st run:
+- input: ```Single-end or paired-end reads?```: paired-end (as a collection)
+  - ***SRA(Input)***
+- Use the following settings:
+   ```Perform initial ILLUMINACLIP step?``` : Yes
+          - ```Select standard adapter sequences or provide custom?```: Standard
+     - ```Adapter sequence to use```: TrueSeq3 (single-ended, for MiSeq and HiSeq)
+
+##### For the 2nd run:
 - input: ```Single-end or paired-end reads?```: paired-end (as a collection)
   - ***SRA(Input)***
 - Use the following settings:
@@ -94,23 +115,31 @@ For the Input dataset:
           > polyA
             GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
   ```
-     - ```Average quality required``` : 30
-     - ```Quality score encoding```: phred 33
 
-Name the outputs: ***trimmomatic on ODO1*** and ***trimmomatic on Input***
 
-Then run fastQC on ***trimmomatic on ODO1*** and ***trimmomatic on Input*** to see whether trimmomatic has succesfully trimmed out the adapter sequence and polyG sequence. Now in the fastQC report, we can see that we have trimmed out the adapter sequences. 
+For the output of trimmomatic for the Input dataset, we will get paired and unpaired, we will use the paired output. 
+
+![trimmomatic_outputs](chipseq_img/4-trimmomatic_outputs.png)
+
+Now we will only be using ***trimmomatic2 (ODO1)*** and ***trimmomatic2 (Input): paired***
+
+Then run fastQC on ***trimmomatic2 (ODO1)*** and ***trimmomatic2 (Input): paired*** to see whether trimmomatic has succesfully trimmed out the adapter sequence and polyG sequence. Now in the fastQC report, we can see that we have trimmed out the adapter sequences. 
+
+![Input_fastQC_after_trimming](chipseq_img/5-Input_fastQC_after_trimming.png)
+![ODO1_fastQC_after_trimming](chipseq_img/6-ODO1_fastQC_after_trimming.png)
+
 
 #### Step 4: Map reads to Petunia genome using ```Bowtie2```
 Download the petunia genome
 
-Run ```Bowtie2``` twice: Once with ***trimmomatic on ODO1*** as the input and once with ***trimmomatic on Input*** as the input 
+Run ```Bowtie2``` twice: Once with ***trimmomatic2 (ODO1)*** as the input and once with ***trimmomatic2 (Input): paired*** as the input 
 
 Use the following settings:
 - ```Will you select a reference genome from your history or use a built-in index?```: Use a built-in genome index
      -```Select reference genome```: Mouse (mus musculus) : mm10
 - ```Select analysis mode```
      -```Do you want to use presets?```: Very sensitive end-to-end
+  
 
 #### Step 5: Merge Input files using ```MergeSamFiles``` 
 
