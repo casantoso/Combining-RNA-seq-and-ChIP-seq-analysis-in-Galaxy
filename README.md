@@ -130,13 +130,13 @@ Then run fastQC on ***trimmomatic2 (ODO1)*** and ***trimmomatic2 (Input): paired
 
 
 #### Step 4: Map reads to Petunia genome using ```Bowtie2```
-Download the petunia genome fasta file  and upload it to Galaxy
+Download the [petunia genome fasta file](https://solgenomics.sgn.cornell.edu/organism/Petunia_axillaris/genome) and upload it to Galaxy
 
 Run ```Bowtie2``` twice: Once with ***trimmomatic2 (ODO1)*** as the input and once with ***trimmomatic2 (Input): paired*** as the input 
 
 Use the following settings:
 - ```Will you select a reference genome from your history or use a built-in index?```: Use a genome from history and build indes
-     -```Select reference genome```: your petunia genome
+     -```Select reference genome```: petunia genome fasta file
 - ```Select analysis mode```
      -```Do you want to use presets?```: No, just use defaults
 - ```Save the bowtie2 mapping statistics to the history``` : Yes
@@ -236,7 +236,7 @@ HISAT2 employs a graph FM index and hierarchical indexing strategy which means t
 The way it works is that it builds a genome index and a splicing graph index (from a GTF/GFF). This lets HISAT2 search efficiently through known exon-exon junctions and novel junctions. When a read fails to align contiguously, HISAT2 attempts to align across known or inferred introns by referencing its splicing graph. It can match reads even if they’re split across multiple exons, using either annotation or read evidence. This makes HISAT2 extremely efficient for genomes with alternative splicing
 
 Use the following settings:
-- ```Source for the reference genome```: cDNA.fasta file
+- ```Source for the reference genome```: [petunia cDNA fasta file](https://solgenomics.sgn.cornell.edu/organism/Petunia_axillaris/genome) 
 - ```Is this a single or paired library```: Paired-end Dataset Collection
   - ```Paired Collection ```: ***Trimmomatic:paired***
  
@@ -244,7 +244,7 @@ There are 2 outputs ***HISAT2: Mapping summary*** and ***HISAT2: aligned reads (
 From ***HISAT2: Mapping summary*** you can see what percentage of the reads were mapped. 
 
 
-#### Step 5: Count the number of aligned reads that overlapp Petunia gff annotation file using ```Htseq-counts```
+#### Step 5: Count the number of aligned reads that overlap Petunia gff annotation file using ```Htseq-counts```
 HTSeq-count takes an alignment file (typically in SAM or BAM format) containing sequencing reads mapped to a reference genome and an annotation file (usually in GTF or GFF format) that describes genomic features (such as genes or exons). Its main function is to count the number of reads that map to each genomic feature. HTSeq-count outputs 2-column tab-delimited text file where the first column is the Gene ID and the 2nd column is the counts. There are 5 rows in the bottoms that do not correspond to geneIDs 
  - __no_feature	->  reads that didn’t overlap any feature (e.g. intergenic)
  - __ambiguous	-> reads that overlapped multiple genes and can’t be assigned
@@ -254,7 +254,7 @@ HTSeq-count takes an alignment file (typically in SAM or BAM format) containing 
 
 Use the following settings:
 - ```Aligned SAM/BAM File``` : ***HISAT2: aligned reads (BAM)***
-- ```GFF/GTF File```: the petunia genome gff file
+- ```GFF/GTF File```: [petunia genome gff file](https://solgenomics.sgn.cornell.edu/organism/Petunia_axillaris/genome)
 - ```Mode``` : Union
 - ```Minimum alignment quality```: 30
 - ```ID Attribute```: ID
@@ -263,15 +263,99 @@ I named the output ***htseq-count***
 
 
 #### Step 6: Find differentially expressed genes using ```DESeq2``` 
-Before we run ```DESeq2```  we are going to extract all of the different sata from 
+DESeq2 is a statistical tool used for differential gene expression analysis from count data. It can help us answer the question: Which genes are significantly upregulated or downregulated between odo1i transgenic flower and wt. 
+
+
+
+Before we run ```DESeq2```  we are going to extract all of the 6 different samples from ***htseq-count***
+
+Go to ```Extract Dataset```. 
+- ```Input List``` : ***htseq-count***
+     - ```How should a dataset be selected?```: Select by index
+     -``` Element index```: 0-5 //Run once with element index as each digit from 0 to 5
+
+![Extract individual dataset](img/4-extract_dataset.png)
+
+Do the same thing for ***Samtools view on ctcf mutant***. This will basically seperate all of out single datasets. As a results, we will ahve all of the SRR numbers in our history. Rename the SRR numbers as follows:
+- SRR14528051 → ***odo1i(1)***
+- SRR14528052 → ***odo1i(2)***
+- SRR14528053 → ***odo1i(3)***
+- SRR14528054 →  ***WT(1)***
+- SRR14528055 →  ***WT(2)***
+- SRR14528056 →  ***WT(3)***
+
+
+Run ```DESeq2```:
+-```Specify a factor name, e.g. effects_drug_x or cancer_markers```: odo1_effects
+  -   ```Factor level```
+    -   1: Factor level
+      - ``` Specify a factor level, typical values could be 'tumor', 'normal', 'treated' or 'control'```: odo1i
+      - ```Counts file(s)``` : ***odo1i(1)***, ***odo1i(2)***, ***odo1i(3)***
+    -   2: Factor level
+      - ``` Specify a factor level, typical values could be 'tumor', 'normal', 'treated' or 'control'```: WT
+      - ```Counts file(s)``` : ***WT(1)***, ***WT(2)***, ***WT(3)***
+   - ```Choice of Input data```: Count data
+ - Output options: Generate plots for visualizing the analysis resutls
+
+
+There are 2 outputs. The DESeq2 plots output and the DESeq2 Result Table. I named the outputs ***DESeq2 plots*** and ***DESeq2 results file*** One of the plots in the plot output is the PCA plot
+
+![PCA_plot](img/5-pca_plot.png)
+
+From this plot we can imply that PC1 is the treatment (wt vs odo1i) because the odo1i samples are all on around the same scale in the x axis. The wt samples are more variable with wt1 is the most different to the odoi1 line, while wt2 is similar to the odo1i samples. Thus, wt1 is probably driving the most difference in PC1. We can also imply that PC2 is variation within replicates. 
+
+
+To more clearly visualize the top upregulated and downregulated genes in the odo1i line, we will make a volcano plot. 
+
+Go to ```Volcano Plot```:
+- ```Specify an input file```: ***DESeq2 results file***
+- make sure all of the column numbers are right for all of the different categories
+
+![volcano_plot](img/6-volcano_plot.png)
+
+
+The output is a volcano plot of the top 10 deregulated genes in the odoi line. Because the aim of this is to find what genes odo1 is involved in, we will focus on the downregulated genes in odo1i line. These are the top 3 downregulated petunia genes. 
+- The first one is Peaxi162Scf01226g00004 which is involved in transcribing B12-binding SAM proteins which help regenerate methionine keeping SAM levels high. Which then allows SAM-dependent methylation of phenylpropanoid intermediates to produce fvbp compounds
+- The second one is Peaxi162Scf00954g00024 which correspond to the C4H gene,which plays a crucial role in the phenylpropanoid pathway, specifically in the production of p-coumaric acid, a precursor for many FVBPs.
+- The third one is Peaxi162Scf00652g00015 which corresponds to the SAHH1 gene which is one of the genes that the paper found to be involved in the SAM and folate cycle. SAHH1 hydrolyzes SAH which inhibit methyltransferases.By removing SAH, SAHH1 maintains methylation capacity by allowing SAM-dependent methyltransferases to function which is needed to produce many FVBP compounds
+
 
 #### Step 7: Gene Ontology
+From the deseq results we want to filter the genes based off of a p-adj value of 0.05
 
+Go to ```Filter```:
+- input: ***DESeq2 results file***
+- ```With following condition```:c7 < 0.05 (make sure  p-adj is the 7th column)
+- ```Number of header lines to skip ```: 1
 
+Put the list downregulated petunia genes into [shinyGo](https://bioinformatics.sdstate.edu/go/). 
+And we found 334 downregulated genes. We did gene ontology on these genes and 2 of the pathways we found most relevant is the lignin metabolic process and phenylpropanoid metabolic process which are both part of FVBP biosynthesis and both also found in the gene ontology of the odo1 abound genes from our chip seq analysis which then just makes the argument stronger that odo1 is involved in these pathways and thus the production of fvbp compounds
+
+![downregulated_GO](img/7-downregulated_GO.png)
+
+Put the list upregulated petunia genes into [shinyGo](https://bioinformatics.sdstate.edu/go/)
+We also found 269 upregulated genes. What happens when odo1 expression is suppressed is beyond the scope of the paper but we found many signalng pathways  which may have likely be part of the plant's adaptive response in the absence of odo1. Also, pathways such as pectin catabolic process, galacturonan metabolic process are  involved in cell wall organization and modification (pectin, galacturonan) which may as the flower remodels or compensates form the lack of odo1. 
+
+![upregulated_GO](img/8-upregulated_GO.png)
 
 
 ### Combining ChIP-seq and RNA-seq analyses
-#### Step 1: Create 3 files of filtered gff based off of the 3 gene lists
+#### Step 1: Finding overlapping genes between genes that were downregulated in odo1i and odo1-bound genes
+
+So combining our chipseq and rna seq analysis, we found that there are 66 genes that overlap between the genes that were downregulated in odo1i and odo1-bound genes. Which was expected for the role of ODO1 as a positive transcriptional regulator as there is usually a 1–40% overlap between TF‐bound targets and genes that are misregulated under TF perturbation, observed across plants, animals and yeast (Swift and Coruzzi, 2017). 
+
+Possible reasons for the large number of genes that are not overlapping
+- The bound but unregulated targets are possibly poised for transcriptional regulation until the desired developmental or environmental cues are perceived. meaning the plant keeps them ready for when the right signal (like a specific developmental stage or environmental stress) appears.In other words, ODO1 is there, but not doing anything yet.
+- The regulated but unbound genes could be indirect targets  (ODO1 affects another gene that then regulates them) or could be direct targets in which the interaction with ODO1 was not captured as a result of the transient nature of such interactions or the limitations of the ChIP‐seq technique.
+  - For example, the 2‐kbp promoter of the FVBP transporter PhABCG1 has previously been shown to be transcriptionally activated by ODO1 (Van Moerkercke et al., 2012), but did not meet the stringency requirements to be termed an ODO1‐bound gene in this study as it only had binding peaks in the 35S:GFP‐ODO1 library and not in the pODO1:GFP‐ODO1 ChIP‐seq library. It is therefore likely to represent a false negative because of the difficulty in capturing the transient interaction.
+
+![Overlapping genes between ODO1-bound genes and downregulated genes in odo1i line](img/9-ODO1-bound_vs_downreg.png)
+
+We also found 37 overlapping genes between the upregulated geens in odoi1 line and the odo1-bound genes. This was unexpected and indicates a still unknown role of odo1 in repression of the expression of certain genes. It is possible that ODO1 interacts with other transcription factors, which recognize a binding motif different from the canonical MYB binding motif, to downregulate specific gene targets. There is also the possibility of the existence of an incoherent feedforward loop in the ODO1 regulatory network, where ODO1 activates a repressor X that downregulates gene Y, and at the same time binds the promoter of gene Y to prime it for future activation under adequate developmental or environmental conditions. For instance, ODO1 binds and activates MYB4, a negative regulator of the phenylpropanoid pathway in petunia (Colquhoun et al., 2011). Overall, the exact mechanism of how ODO1 controls gene regulation either directly or through downstream targets requires further investigation.
+
+![Overlapping genes between ODO1-bound genes and upregulated genes in odo1i line](img/10-ODO1-bound_vs_upreg.png)
+
+#### Step 2: Create 3 files of filtered gff based off of the 3 gene lists
 
 #### Step 2: Motif analysis using ```memeChIP```
 
