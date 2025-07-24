@@ -37,10 +37,10 @@ The authors used *RNA-seq* to determine whether the genes bound by ODO1 (as show
   - [Step 7: Gene Ontology](#step-7-gene-ontology)
 
 - Combining ChIP-seq and RNA-seq analyses
-  - [Step 1: Create 3 files of filtered gff based off of the 3 gene lists](#step-1-Create-3-files-of-filtered-gff-based-off-of-the-3-gene-lists) 
-  - [Step 2: Motif analysis using memeChIP](#step-9-motif-analysis-using-memeChIP)
-  -  
-
+  -  [Step 1: Finding overlapping genes between genes that were downregulated in odo1i and odo1-bound genes](#step-1-Finding-overlapping-genes-between-genes-that-were-downregulated-in-odo1i-and-odo1-bound-genes) 
+  -  [Step 2: Create 3 files of filtered gff based off of the 3 gene lists](#step-2-Create-3-files-of-filtered-gff-based-off-of-the-3-gene-lists) 
+  - [Step 3: Motif analysis using memeChIP](#step-3-motif-analysis-using-memeChIP)
+    
 
 ### ChIP-seq analysis
 #### Step 1: Import data
@@ -157,7 +157,6 @@ I named the output: ***MergeSamFiles on input***
 #### Step 6: Find peaks using ```MACS2 callpeak``` 
 ```MACS2 callpeak``` is used to identify enriched regions of DNA — called "peaks" — from ChIP-seq data. It basically looks for places in the genome where there are many sequencing reads aligned to it which indicates where CTCF binds. 
 
-
 Use these settings:
 -```ChIP-Seq Treatment File``` : ***Bowtie2(ODO1):alignments***
 - ```Do you have a Control File?```: yes
@@ -192,7 +191,38 @@ Then we will run ```Bedtools Intersect intervals```  again to find the intersect
 
 
 #### Step 8: Gene Ontology
+Download the bed output from ***bedtools Intersect intervals on pODO1:GFP-ODO1 and 35S:GFP-ODO1***. We want to extract the geneIDs
+'''
+input_file = "/Users/chiarasantoso/Desktop/bedtools_Intersect_intervals_on_peaks_and_gff.bed"
+output_file = "/Users/chiarasantoso/Desktop/odo1_target_petunia_genes.txt"
 
+gene_ids = set()
+
+with open(input_file) as f:
+    for line in f:
+        fields = line.strip().split("\t")
+
+        # Check that this line refers to a 'gene' feature from GTF
+        if len(fields) > 12 and fields[12] == "gene":  # make sure to only extract gene IDs from actual gene entries
+            attributes = fields[18]  # GTF attributes field
+            for item in attributes.split(";"):
+                item = item.strip()
+                if item.startswith("ID="):
+                    gene_id = item.split("=")[1]
+                    gene_ids.add(gene_id)
+
+# Save to file
+with open(output_file, "w") as out:
+    for gid in sorted(gene_ids):
+        out.write(gid + "\n")
+
+print(f"✔️ Extracted {len(gene_ids)} unique gene IDs to: {output_file}")
+'''
+This gave me 2170 geneIDs. Insert these gene IDs to [shinyGo](https://bioinformatics.sdstate.edu/go/). 
+
+![GO](chipseq_img/7-GO.png)
+
+These are the pathways I got. As we can see, ODO1- bound genes were involved in the lignin biosynthetic process, indicating that ODO1 may also play a role in directly regulating genes that are responsible for generating the monolignol precursor coniferyl alcohol for the synthesis of the FVBPs eugenol and isoeugenol. ODO1 is also associated with phenylpropanoid metabolic process, consistent with previous observations that ODO1 regulates genes in the shikimate pathway in order to increase Phe biosynthesis
 
 
 ### RNA-seq analysis
@@ -265,8 +295,6 @@ I named the output ***htseq-count***
 #### Step 6: Find differentially expressed genes using ```DESeq2``` 
 DESeq2 is a statistical tool used for differential gene expression analysis from count data. It can help us answer the question: Which genes are significantly upregulated or downregulated between odo1i transgenic flower and wt. 
 
-
-
 Before we run ```DESeq2```  we are going to extract all of the 6 different samples from ***htseq-count***
 
 Go to ```Extract Dataset```. 
@@ -304,7 +332,6 @@ There are 2 outputs. The DESeq2 plots output and the DESeq2 Result Table. I name
 
 From this plot we can imply that PC1 is the treatment (wt vs odo1i) because the odo1i samples are all on around the same scale in the x axis. The wt samples are more variable with wt1 is the most different to the odoi1 line, while wt2 is similar to the odo1i samples. Thus, wt1 is probably driving the most difference in PC1. We can also imply that PC2 is variation within replicates. 
 
-
 To more clearly visualize the top upregulated and downregulated genes in the odo1i line, we will make a volcano plot. 
 
 Go to ```Volcano Plot```:
@@ -321,19 +348,49 @@ The output is a volcano plot of the top 10 deregulated genes in the odoi line. B
 
 
 #### Step 7: Gene Ontology
-From the deseq results we want to filter the genes based off of a p-adj value of 0.05
+From the deseq results we want to filter the genes based off of a p-adj value of 0.05 and get a list of downregulated and upregulated gene IDs. 
 
-Go to ```Filter```:
-- input: ***DESeq2 results file***
-- ```With following condition```:c7 < 0.05 (make sure  p-adj is the 7th column)
-- ```Number of header lines to skip ```: 1
+'''
+input_file = "DESeq2_results_file.tabular" # path to your DESeq2 output
+up_file = "upregulated.txt"
+down_file = "downregulated.txt"
 
-Put the list downregulated petunia genes into [shinyGo](https://bioinformatics.sdstate.edu/go/). 
+with open(input_file) as f, \
+     open(up_file, "w") as up, \
+     open(down_file, "w") as down:
+
+    header = f.readline().strip().split("\t")
+    gene_idx = header.index("GeneID")
+    lfc_idx = header.index("log2(FC)")
+    padj_idx = header.index("p-adj")
+
+    for line in f:
+        fields = line.strip().split("\t")
+        try:
+            gene_id = fields[gene_idx].split(":exon")[0]
+            lfc = float(fields[lfc_idx])
+            padj = float(fields[padj_idx])
+
+            if padj < 0.05:
+                if lfc > 0:
+                    up.write(gene_id + "\n")
+                elif lfc < 0:
+                    down.write(gene_id + "\n")
+        except (ValueError, IndexError):
+            continue  # skip malformed lines
+
+print("✔️ Gene lists saved to:")
+print(f"  • {up_file}")
+print(f"  • {down_file}")
+
+'''
+
+Copy and paste the list of downregulated petunia genes into [shinyGo](https://bioinformatics.sdstate.edu/go/). 
 And we found 334 downregulated genes. We did gene ontology on these genes and 2 of the pathways we found most relevant is the lignin metabolic process and phenylpropanoid metabolic process which are both part of FVBP biosynthesis and both also found in the gene ontology of the odo1 abound genes from our chip seq analysis which then just makes the argument stronger that odo1 is involved in these pathways and thus the production of fvbp compounds
 
 ![downregulated_GO](img/7-downregulated_GO.png)
 
-Put the list upregulated petunia genes into [shinyGo](https://bioinformatics.sdstate.edu/go/)
+Copy and paste the list of upregulated petunia genes into [shinyGo](https://bioinformatics.sdstate.edu/go/)
 We also found 269 upregulated genes. What happens when odo1 expression is suppressed is beyond the scope of the paper but we found many signalng pathways  which may have likely be part of the plant's adaptive response in the absence of odo1. Also, pathways such as pectin catabolic process, galacturonan metabolic process are  involved in cell wall organization and modification (pectin, galacturonan) which may as the flower remodels or compensates form the lack of odo1. 
 
 ![upregulated_GO](img/8-upregulated_GO.png)
@@ -357,7 +414,56 @@ We also found 37 overlapping genes between the upregulated geens in odoi1 line a
 
 #### Step 2: Create 3 files of filtered gff based off of the 3 gene lists
 
-#### Step 2: Motif analysis using ```memeChIP```
+Upload the gene lists of ODO1-bound genes(from the chipseq section) and the list of upregulated genes and downregulated genes in the odo1i line (from the rnaseq section)
+
+Do this for all 3 gene lists (ODO1-bound(from the chipseq section) , upregulated in the odo1i line, downregulated in the odo1i line(from the rnaseq section))
+'''
+import pandas as pd
+
+# Load GFF
+gff = pd.read_csv("Peaxi162annotation_v4.gff", sep="\t", header=None)
+
+# Keep only 'gene' features 
+gff = gff[gff[2] == "gene"]
+
+# Extract gene ID (assumes ID= format)
+gff["gene_id"] = gff[8].str.extract(r'(?:ID|gene_id)=([^;]+)')
+
+# Load gene list (no header)
+genes = pd.read_csv("odo1-bound.txt", sep="\t", header=None)[0].tolist() 
+# Filter GFF
+filtered_gff = gff[gff["gene_id"].isin(genes)]
+
+# Drop helper column
+filtered_gff = filtered_gff.drop(columns=["gene_id"])
+
+# Save filtered GFF
+filtered_gff.to_csv("ODO1_bound.gff", sep="\t", header=False, index=False)
+
+'''
+I am going to refer to the 3 files as ***ODO1_bound.gff***, ***upregulated.gff*** and ***downreulated.gff***
+
+#### Step 3: Motif analysis using ```MEME-ChIP``
+
+Upload the 3 gff file to galaxy. 
+Before running ```MEME-ChIP``` we have to run ``` bedtools getfasta``` 
+
+Go to ``` bedtools getfasta``` :
+- ```BED/bedGraph/GFF/VCF/EncodePeak file```: gff file (run this once for each of the 3 gff files)
+- ```Choose the source for the FASTA file```: History
+  - ```FASTA file```: [petunia genome fasta file](https://solgenomics.sgn.cornell.edu/organism/Petunia_axillaris/genome)
+
+I named the outputs: ***bedtools getfasta on ODO1-bound***, ***bedtools getfasta on downregulated***, ***bedtools getfasta on upregulated***
+
+Go to  ```MEME-ChIP```:
+- ```Primary sequences``` : ***bedtools getfasta on ODO1-bound***/ ***bedtools getfasta on downregulated***/ ***bedtools getfasta on upregulated*** ( run once for each)
+- ```Sequence alphabet``` : DNA
+
+A cis motif, CCACCAA was enriched among the promoters of genes bound by ODO1 and similar to the motif of the promotersactivated by ODO1 (i.e. downregulated in odo1i), but was not detected among the promoters of ODO1-bound genes that are upregulated in odo1i (Figure 5b). This motif was therefore considered as a candidate binding site of ODO1 in the promoters of target genes for their transcriptional activation.
+The motif 1 identified is similar to the ACC(T/A)ACC motif bound by ZmMYB31, a regulator of the lignin biosyn- thetic pathway in Zea mays (maize) (Fornale et al., 2010). It is also similar to the AC element sequence AC-II (ACCAACC) involved in the regulation of phenylpropanoid and lignin biosynthetic genes in Arabidopsis
+
+
+
 
 
 
