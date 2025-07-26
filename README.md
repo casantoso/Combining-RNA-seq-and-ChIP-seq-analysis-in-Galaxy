@@ -23,7 +23,7 @@ The authors used *RNA-seq* to determine whether the genes bound by ODO1 (as show
   - [Step 3: Trim using Trimmomatic ](#step-3-trim-using-trimmomatic)
   - [Step 4: Map reads to Petunia genome using Bowtie2](#step-4-map-reads-to-petunia-genome-using-bowtie2)
   - [Step 5: Merge Input files using MergeSamFiles](#step-5-Merge-Input-files-using-MergeSamFiles)
-  - [Step 6: Find common peaks between the 2 petunia lines using Bedtools Intersect intervals](#step-6-Find-common-peaks-between-the-2-petunia-lines-using-Bedtools-Intersect-intervals)
+  - [Step 6: Find peaks using MACS2 callpeak](#step-6-Find-peaks-using-MACS2-callpeak)
   -  [Step 7: bedtools Intersect intervals to find common peaks between the 2 petunia lines](#step-7-bedtools-Intersect-intervals-to-find-common-peaks-between-the-2-petunia-lines)
   -  [Step 8: Gene Ontology](#step-8-gene-ontology)
 
@@ -40,6 +40,8 @@ The authors used *RNA-seq* to determine whether the genes bound by ODO1 (as show
   -  [Step 1: Finding overlapping genes between genes that were downregulated in odo1i and odo1-bound genes](#step-1-Finding-overlapping-genes-between-genes-that-were-downregulated-in-odo1i-and-odo1-bound-genes) 
   -  [Step 2: Create 3 files of filtered gff based off of the 3 gene lists](#step-2-Create-3-files-of-filtered-gff-based-off-of-the-3-gene-lists) 
   - [Step 3: Motif analysis using memeChIP](#step-3-motif-analysis-using-memeChIP)
+ 
+- Summary
     
 
 ### ChIP-seq analysis
@@ -258,7 +260,7 @@ Use the following settings:
 we are only going to use the apired output( ***Trimmomatic:paired***)
 
 Then run fastQC on  ***Trimmomatic:paired*** to see whether trimmomatic has succesfully trimmed out the adapter sequence. Now in the fastQC report, we can see that we have trimmed out the adapter sequences. 
-![fastQC_after_trimming](rnaseq_img/2-fastQC_after_trimming.png)
+![fastQC_after_trimming](rnaseq_img/3-fastQC_after_trimming.png)
 
 #### Step 4: Align reads to Petunia genome using ```HISAT2```
 HISAT2 employs a graph FM index and hierarchical indexing strategy which means that it employs two types of indexes: (1) one global FM index representing the whole genome, and (2) many separate local FM indexes for small regions collectively covering the genome. 
@@ -302,7 +304,7 @@ Go to ```Extract Dataset```.
      - ```How should a dataset be selected?```: Select by index
      -``` Element index```: 0-5 //Run once with element index as each digit from 0 to 5
 
-![Extract individual dataset](img/4-extract_dataset.png)
+![Extract individual dataset](rnaseq_img/4-extract_dataset.png)
 
 Do the same thing for ***Samtools view on ctcf mutant***. This will basically seperate all of out single datasets. As a results, we will ahve all of the SRR numbers in our history. Rename the SRR numbers as follows:
 - SRR14528051 → ***odo1i(1)***
@@ -328,7 +330,7 @@ Run ```DESeq2```:
 
 There are 2 outputs. The DESeq2 plots output and the DESeq2 Result Table. I named the outputs ***DESeq2 plots*** and ***DESeq2 results file*** One of the plots in the plot output is the PCA plot
 
-![PCA_plot](img/5-pca_plot.png)
+![PCA_plot](rnaseq_img/5-pca_plot.png)
 
 From this plot we can imply that PC1 is the treatment (wt vs odo1i) because the odo1i samples are all on around the same scale in the x axis. The wt samples are more variable with wt1 is the most different to the odoi1 line, while wt2 is similar to the odo1i samples. Thus, wt1 is probably driving the most difference in PC1. We can also imply that PC2 is variation within replicates. 
 
@@ -338,7 +340,7 @@ Go to ```Volcano Plot```:
 - ```Specify an input file```: ***DESeq2 results file***
 - make sure all of the column numbers are right for all of the different categories
 
-![volcano_plot](img/6-volcano_plot.png)
+![volcano_plot](rnaseq_img/6-volcano_plot.png)
 
 
 The output is a volcano plot of the top 10 deregulated genes in the odoi line. Because the aim of this is to find what genes odo1 is involved in, we will focus on the downregulated genes in odo1i line. These are the top 3 downregulated petunia genes. 
@@ -388,12 +390,12 @@ print(f"  • {down_file}")
 Copy and paste the list of downregulated petunia genes into [shinyGo](https://bioinformatics.sdstate.edu/go/). 
 And we found 334 downregulated genes. We did gene ontology on these genes and 2 of the pathways we found most relevant is the lignin metabolic process and phenylpropanoid metabolic process which are both part of FVBP biosynthesis and both also found in the gene ontology of the odo1 abound genes from our chip seq analysis which then just makes the argument stronger that odo1 is involved in these pathways and thus the production of fvbp compounds
 
-![downregulated_GO](img/7-downregulated_GO.png)
+![downregulated_GO](rnaseq_img/7-downregulated_GO.png)
 
 Copy and paste the list of upregulated petunia genes into [shinyGo](https://bioinformatics.sdstate.edu/go/)
 We also found 269 upregulated genes. What happens when odo1 expression is suppressed is beyond the scope of the paper but we found many signalng pathways  which may have likely be part of the plant's adaptive response in the absence of odo1. Also, pathways such as pectin catabolic process, galacturonan metabolic process are  involved in cell wall organization and modification (pectin, galacturonan) which may as the flower remodels or compensates form the lack of odo1. 
 
-![upregulated_GO](img/8-upregulated_GO.png)
+![upregulated_GO](rnaseq_img/8-upregulated_GO.png)
 
 
 ### Combining ChIP-seq and RNA-seq analyses
@@ -406,11 +408,11 @@ Possible reasons for the large number of genes that are not overlapping
 - The regulated but unbound genes could be indirect targets  (ODO1 affects another gene that then regulates them) or could be direct targets in which the interaction with ODO1 was not captured as a result of the transient nature of such interactions or the limitations of the ChIP‐seq technique.
   - For example, the 2‐kbp promoter of the FVBP transporter PhABCG1 has previously been shown to be transcriptionally activated by ODO1 (Van Moerkercke et al., 2012), but did not meet the stringency requirements to be termed an ODO1‐bound gene in this study as it only had binding peaks in the 35S:GFP‐ODO1 library and not in the pODO1:GFP‐ODO1 ChIP‐seq library. It is therefore likely to represent a false negative because of the difficulty in capturing the transient interaction.
 
-![Overlapping genes between ODO1-bound genes and downregulated genes in odo1i line](img/9-ODO1-bound_vs_downreg.png)
+![Overlapping genes between ODO1-bound genes and downregulated genes in odo1i line](rnaseq_img/9-ODO1-bound_vs_downreg.png)
 
 We also found 37 overlapping genes between the upregulated geens in odoi1 line and the odo1-bound genes. This was unexpected and indicates a still unknown role of odo1 in repression of the expression of certain genes. It is possible that ODO1 interacts with other transcription factors, which recognize a binding motif different from the canonical MYB binding motif, to downregulate specific gene targets. There is also the possibility of the existence of an incoherent feedforward loop in the ODO1 regulatory network, where ODO1 activates a repressor X that downregulates gene Y, and at the same time binds the promoter of gene Y to prime it for future activation under adequate developmental or environmental conditions. For instance, ODO1 binds and activates MYB4, a negative regulator of the phenylpropanoid pathway in petunia (Colquhoun et al., 2011). Overall, the exact mechanism of how ODO1 controls gene regulation either directly or through downstream targets requires further investigation.
 
-![Overlapping genes between ODO1-bound genes and upregulated genes in odo1i line](img/10-ODO1-bound_vs_upreg.png)
+![Overlapping genes between ODO1-bound genes and upregulated genes in odo1i line](rnaseq_img/10-ODO1-bound_vs_upreg.png)
 
 #### Step 2: Create 3 files of filtered gff based off of the 3 gene lists
 
@@ -459,9 +461,20 @@ Go to  ```MEME-ChIP```:
 - ```Primary sequences``` : ***bedtools getfasta on ODO1-bound***/ ***bedtools getfasta on downregulated***/ ***bedtools getfasta on upregulated*** ( run once for each)
 - ```Sequence alphabet``` : DNA
 
-A cis motif, CCACCAA was enriched among the promoters of genes bound by ODO1 and similar to the motif of the promotersactivated by ODO1 (i.e. downregulated in odo1i), but was not detected among the promoters of ODO1-bound genes that are upregulated in odo1i (Figure 5b). This motif was therefore considered as a candidate binding site of ODO1 in the promoters of target genes for their transcriptional activation.
-The motif 1 identified is similar to the ACC(T/A)ACC motif bound by ZmMYB31, a regulator of the lignin biosyn- thetic pathway in Zea mays (maize) (Fornale et al., 2010). It is also similar to the AC element sequence AC-II (ACCAACC) involved in the regulation of phenylpropanoid and lignin biosynthetic genes in Arabidopsis
+![memeChIP](rnaseq_img/11-meme.png)
 
+A cis motif, CCACCAA was enriched among the promoters of genes bound by ODO1. A similar motif was found in the promoters activated by ODO1 (i.e. downregulated in odo1i) with mostly Cs, As and Ts. However, this pattern was not seen in the promoters of ODO1-bound genes that are upregulated in odo1i, where there are a lot of Gs and less Cs. 
+
+### Summary
+In this integrated analysis, we used publicly available ChIP-seq and RNA-seq datasets from Boersma et al. to explore the regulatory role of the transcription factor ODO1 in Petunia axillaris. By analyzing ODO1 DNA-binding profiles and gene expression changes in ODO1 knockdown lines, we identified:
+
+- 2,170 ODO1-bound genes from ChIP-seq, with significant enrichment in the lignin biosynthetic and phenylpropanoid metabolic pathways.
+- 334 genes downregulated and 269 genes upregulated in the odo1i line, with the downregulated genes showing strong functional enrichment in volatile compound biosynthesis, supporting ODO1’s role as a positive regulator of floral scent production.
+- 66 genes that were both bound by ODO1 and downregulated in the knockdown line — likely representing high-confidence direct transcriptional targets.
+- Surprisingly, 37 ODO1-bound genes were upregulated in the absence of ODO1, suggesting a potential repressive role for ODO1 under certain regulatory contexts or through indirect interactions (e.g., feedforward loops).
+- Motif analysis further revealed an enriched CCACCAA cis-regulatory motif among ODO1-bound promoters, reinforcing the specificity of ODO1-DNA interactions.
+
+Together, this analysis offers a multi-layered view of ODO1-mediated transcriptional regulation and provides insight into how this transcription factor orchestrates the metabolic pathways underlying floral volatile compound production in petunia. This approach also showcases the power of combining RNA-seq and ChIP-seq analyses in Galaxy for studying gene regulatory networks in non-model plant species.
 
 
 
