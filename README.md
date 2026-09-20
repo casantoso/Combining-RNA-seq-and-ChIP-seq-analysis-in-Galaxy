@@ -1,48 +1,70 @@
-# Combining-RNA-seq-and-ChIP-seq-analysis-using-Galaxy
-This is an example workflow that combines ChIP-seq and RNA-seq analysis primarily using Galaxy. We are using a [dataset](https://www.ncbi.nlm.nih.gov/Traces/study/?acc=PRJNA729780&o=acc_s%3Aa) from [Boersma et al's study](https://pmc.ncbi.nlm.nih.gov/articles/PMC9306810/) investigating the role of ODO1 in the production of FVBPs in Petunia flowers. FVBPs (floral volatile benzoid and phenylpropanoid compounds) are specialized metabolites that produce scent bouquets in Petunia flowers. ODO1 have been found to be a master regulator of metabolic FVBP synthesis and emission. However, the way in which ODO1 regulate the synthesis and emission of FVBPs in the Petunia was unknown. 
+# Integrated RNA-seq and ChIP-seq Analysis Using Galaxy
 
-Thus, the  authors used *ChIP-seq* to identify the direct genomic targets of the ODO1 transcription factor in petunia flowers. Two transgenic petunia flowers were used :  
-- pODO1:GFP‐ODO1
-  -  uses the natural ODO1 promoter (pODO1)
-  - crucial for observing when and where the protein is normally present—such as its diurnal oscillation (with levels peaking in the evening), reflecting the actual biological scenario in petunia flowers.
+## Project Overview
 
-- 35S:GFP‐ODO1
-  - 35S is a constitutive promoter from the cauliflower mosaic virus
-  - This ensures that GFP‐ODO1 is expressed at high levels in a more uniform manner, regardless of the endogenous regulatory cues.
- 
-Using both the native promoter construct (pODO1:GFP‐ODO1) and the overexpression construct (35S:GFP‐ODO1) allowed the researchers to compare the binding profiles. Only those binding peaks detected in both setups were considered high-confidence, thereby minimizing the risk of false positives.
+This project integrates **ChIP-seq and RNA-seq data** to investigate the transcriptional regulatory role of **ODO1** in *Petunia axillaris*. Using publicly available sequencing datasets from Boersma et al., I independently analyzed ODO1 DNA-binding profiles and gene-expression changes following ODO1 knockdown, then integrated the two datasets to identify candidate direct transcriptional targets.
 
-The authors used *RNA-seq* to determine whether the genes bound by ODO1 (as shown by ChIP‐seq) actually exhibited changes in expression when ODO1 was suppressed. This validation helps distinguish between direct targets (whose expression changes are directly linked to ODO1 binding) and indirect effects. RNA-seq was performed on WT and odo1i (ODO1 RNAi knockdown line) transgenic petunia flowers
+The analysis was performed primarily in **Galaxy** and includes processing of raw sequencing reads, quality control, genome alignment, ChIP-seq peak calling, RNA-seq differential-expression analysis, functional enrichment, motif analysis, and integration of transcription-factor binding with gene-expression changes.
 
+This project was completed as part of **Biological Data Analysis for High Throughput Sequencing Data** in Spring 2025 and provided experience with end-to-end analysis and integration of multiple high-throughput sequencing modalities.
 
-## Table of contents
+## Biological Question
 
-- ChIP-seq analysis
-  - [Step 1: Import data](#step-1-import-data)
-  - [Step 2: Quality control using FastQC](#step-2-quality-control-using-fastqc)
-  - [Step 3: Trim using Trimmomatic ](#step-3-trim-using-trimmomatic)
-  - [Step 4: Map reads to Petunia genome using Bowtie2](#step-4-map-reads-to-petunia-genome-using-bowtie2)
-  - [Step 5: Merge Input files using MergeSamFiles](#step-5-Merge-Input-files-using-MergeSamFiles)
-  - [Step 6: Find peaks using MACS2 callpeak](#step-6-Find-peaks-using-MACS2-callpeak)
-  -  [Step 7: bedtools Intersect intervals to find common peaks between the 2 petunia lines](#step-7-bedtools-Intersect-intervals-to-find-common-peaks-between-the-2-petunia-lines)
-  -  [Step 8: Gene Ontology](#step-8-gene-ontology)
+Which genes and biological pathways are regulated by the transcription factor **ODO1** during floral volatile benzenoid and phenylpropanoid (FVBP) production in petunia?
 
-- RNA-seq analysis
-  - [Step 1: Import data](#step-1-import-data)
-  - [Step 2: Quality control using FastQC](#step-2-quality-control-using-fastqc)
-  - [Step 3: Trim using Trimmomatic ](#step-3-trim-using-trimmomatic)
-  - [Step 4: Align reads to Petunia genome using HISAT2](#step-4-Align-reads-to-Petunia-genome-using-HISAT2)
-  - [Step 5: Count the number of aligned reads that overlapp Petunia gff annotation file using Htseq-counts](#step-5-Count-the-number-of-aligned-reads-that-overlapp-Petunia-gff-annotation-file-using-Htseq-counts) 
-  - [Step 6: Find differentially expressed genes using DESeq2](#step-6-Find-differentially-expressed-genes-using-DESeq2) 
-  - [Step 7: Gene Ontology](#step-7-gene-ontology)
+FVBPs are specialized metabolites that contribute to floral scent in petunia. ODO1 has been identified as an important transcriptional regulator of FVBP synthesis and emission.
 
-- Combining ChIP-seq and RNA-seq analyses
-  -  [Step 1: Finding overlapping genes between genes that were downregulated in odo1i and odo1-bound genes](#step-1-Finding-overlapping-genes-between-genes-that-were-downregulated-in-odo1i-and-odo1-bound-genes) 
-  -  [Step 2: Create 3 files of filtered gff based off of the 3 gene lists](#step-2-Create-3-files-of-filtered-gff-based-off-of-the-3-gene-lists) 
-  - [Step 3: Motif analysis using memeChIP](#step-3-motif-analysis-using-memeChIP)
- 
-- Summary
-    
+The study used two complementary sequencing approaches:
+
+- **ChIP-seq** to identify genomic regions associated with ODO1 binding.
+- **RNA-seq** to determine how gene expression changes when ODO1 expression is suppressed.
+
+Integrating these datasets makes it possible to identify genes that are both associated with ODO1 binding and transcriptionally responsive to ODO1 perturbation.
+
+## Analysis Strategy
+
+### ChIP-seq
+**Raw reads → Quality control → Trimming → Bowtie2 alignment → Peak calling → Shared ODO1 peaks → Peak-associated genes → Functional enrichment**
+
+### RNA-seq
+**Raw reads → Quality control → Trimming → HISAT2 alignment → Read counting → DESeq2 differential expression → Functional enrichment**
+
+### Integrated Analysis
+**ODO1-associated genes + Differentially expressed genes → Candidate regulatory targets → Motif analysis**
+
+## Tools and Methods
+
+- **Galaxy** — primary workflow environment
+- **FastQC** — sequencing quality control
+- **Trimmomatic** — read trimming
+- **Bowtie2** — ChIP-seq alignment
+- **HISAT2** — RNA-seq alignment
+- **HTSeq-count** — gene-level read quantification
+- **DESeq2** — differential-expression analysis
+- **MACS2** — ChIP-seq peak calling
+- **BEDTools** — genomic interval operations
+- **MEME-ChIP** — motif analysis
+- **ShinyGO** — functional enrichment
+- **Python / pandas** — gene ID extraction and genomic annotation filtering
+
+## Key Findings
+
+- ChIP-seq analysis identified **2,170 genes associated with ODO1 binding**.
+- RNA-seq analysis identified **334 downregulated genes** and **269 upregulated genes** following ODO1 knockdown.
+- **66 genes** were both associated with ODO1 binding and downregulated following ODO1 knockdown, making them strong candidate direct targets of positive ODO1 regulation.
+- **37 genes** were both associated with ODO1 binding and upregulated following ODO1 knockdown, suggesting more complex regulatory relationships.
+- ODO1-associated and downregulated gene sets were enriched for pathways related to **phenylpropanoid metabolism, lignin metabolism, and floral volatile biosynthesis**.
+- Motif analysis identified an enriched **CCACCAA-like cis-regulatory motif** among ODO1-associated regions.
+
+## My Contribution
+
+I performed and documented the computational analysis presented in this repository, including ChIP-seq and RNA-seq preprocessing, alignment, peak calling, differential-expression analysis, functional enrichment, integration of the two sequencing modalities, motif analysis, and biological interpretation.
+
+A major focus of the project was learning how complementary genomic assays can be integrated: ChIP-seq identifies where a transcription factor binds, while RNA-seq measures the transcriptional consequences of perturbing that regulator.
+
+The detailed analysis steps and Galaxy settings are documented below.
+
+---
 
 ### ChIP-seq analysis
 #### Step 1: Import data
